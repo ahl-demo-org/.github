@@ -102,6 +102,7 @@ jobs:
           # Scan Phase (Cost-Optimized Model)
           echo "🔍 Scanning codebase with Gemini 3.5 Flash..."
           cd ..
+          echo "$(ls)"
           cd ${{ inputs.repo_name }}
           PWD = pwd
           echo "Changed working dir to $PWD"
