@@ -94,6 +94,7 @@ jobs:
           # Query Findings
           FINDINGS=$(cm report --status OPEN --format json)
           FINDINGS_COUNT=$(echo "$FINDINGS" | jq '. | length')
+          echo "NO_FINDINGS=false" >> "$GITHUB_ENV"
 
           if [ "$FINDINGS_COUNT" -eq 0 ]; then
             echo "🎉 Success! No open vulnerabilities found."
@@ -124,6 +125,20 @@ jobs:
           echo "# CodeMender Scan Results" >> $GITHUB_STEP_SUMMARY
           cat codemender_summary.md >> $GITHUB_STEP_SUMMARY
 
+          # Export a sarif report
+          cm report --format md > ./${{ inputs.repo_name }}/codemender_report.sarif
+
+      - name: Upload CodeMender Findings to GitHub Code Scanning
+        if: env.NO_FINDINGS == 'false'
+        uses: github/code-scanning-workflow/upload-sarif@v3
+        with:
+          # Points directly to the target repository where you want the alerts to display
+          checkout_path: ${{ inputs.repo_name }}
+          # The file location of the exported SARIF
+          sarif_file: ${{ inputs.repo_name }}/codemender_report.sarif
+          # Requires a token with 'security-events: write' permissions on the target repo
+          token: ${{ secrets.ORG_READ_TOKEN }}
+      
       # Cleanup Sensitive Binaries (Best Practice)
       - name: Cleanup
         if: always()
