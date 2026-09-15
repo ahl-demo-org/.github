@@ -17,23 +17,29 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
-      # 1. Authenticate to Google Cloud securely
-      - name: Authenticate to Google Cloud
-        uses: google-github-actions/auth@v2
-        with:
-          workload_identity_provider: "${{ secrets.WIF_PROVIDER }}"
-          service_account: "${{ secrets.WIF_SERVICE_ACCOUNT }}"
-
-      # NEW STEP: Set up the gcloud CLI
-      - name: Set up Google Cloud SDK
-        uses: google-github-actions/setup-gcloud@v2
-
-      # 2. Download and Install CodeMender On-The-Fly
-      - name: Install CodeMender CLI
+    
+      # 0. DEBUG: print secrets
+      - name: DEBUG - Print Secrets
         run: |
           echo "WIF Provider: ${{ secrets.WIF_PROVIDER }}"
           echo "Service Account: ${{ secrets.WIF_SERVICE_ACCOUNT }}"
+
+      # 1. Authenticate to Google Cloud securely
+      # - name: Authenticate to Google Cloud
+      #   uses: google-github-actions/auth@v2
+      #   with:
+      #     workload_identity_provider: "${{ secrets.WIF_PROVIDER }}"
+      #     service_account: "${{ secrets.WIF_SERVICE_ACCOUNT }}"
+
+      # NEW STEP: Set up the gcloud CLI
+      # - name: Set up Google Cloud SDK
+      #   uses: google-github-actions/setup-gcloud@v2
+
+      # 2. Download and Install CodeMender On-The-Fly
+      # - name: Install CodeMender CLI
+      #   run: |
+      #     echo "WIF Provider: ${{ secrets.WIF_PROVIDER }}"
+      #     echo "Service Account: ${{ secrets.WIF_SERVICE_ACCOUNT }}"
           # echo "Downloading CodeMender from Artifact Registry..."
           # gcloud artifacts generic download \
           #   --project=cmoc-prod \
