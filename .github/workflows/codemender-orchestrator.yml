@@ -8,9 +8,9 @@ jobs:
     steps:
       - name: Trigger task for all repos
         env:
-          # Needs 'workflow' and 'repo' scopes for the organization
           GH_TOKEN: ${{ secrets.ORG_WORKFLOW_TOKEN }} 
         run: |
+          echo "GH Token: ${GH_TOKEN}"
           gh api orgs/${{ github.repository_owner }}/repos --paginate --jq '.[].name' | while read repo; do
             # Skip triggering the central .github repo itself to avoid infinite loops
             if [ "$repo" = ".github" ]; then continue; fi
