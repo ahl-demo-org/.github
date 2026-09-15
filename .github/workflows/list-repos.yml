@@ -1,0 +1,19 @@
+name: List Organization Repositories
+
+on:
+  workflow_dispatch: # Allows manual trigger from the GitHub Actions UI
+
+jobs:
+  list-all-repos:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Fetch and print repositories
+        env:
+          GH_TOKEN: ${{ secrets.ORG_READ_TOKEN }}
+        run: |
+          echo "Listing all repositories for organization: ${{ github.repository_owner }}"
+          echo "--------------------------------------------------"
+          
+          # gh api handles automatic pagination using --paginate
+          gh api orgs/${{ github.repository_owner }}/repos --paginate --jq '.[].name'
