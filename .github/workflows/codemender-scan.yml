@@ -39,41 +39,41 @@ jobs:
       #     gh api orgs/${{ github.repository_owner }}/repos --paginate --jq '.[].name'
 
       # Authenticate to Google Cloud securely
-      - name: Authenticate to Google Cloud
-        uses: google-github-actions/auth@v2
-        with:
-          workload_identity_provider: "${{ secrets.WIF_PROVIDER }}"
-          service_account: "${{ secrets.WIF_SERVICE_ACCOUNT }}"
+      # - name: Authenticate to Google Cloud
+      #   uses: google-github-actions/auth@v2
+      #   with:
+      #     workload_identity_provider: "${{ secrets.WIF_PROVIDER }}"
+      #     service_account: "${{ secrets.WIF_SERVICE_ACCOUNT }}"
 
       # Set up the gcloud CLI
-      - name: Set up Google Cloud SDK
-        uses: google-github-actions/setup-gcloud@v2
+      # - name: Set up Google Cloud SDK
+      #   uses: google-github-actions/setup-gcloud@v2
 
       # Download and Install CodeMender On-The-Fly
-      - name: Install CodeMender CLI
-        run: |
-          echo "WIF Provider: ${{ secrets.WIF_PROVIDER }}"
-          echo "Service Account: ${{ secrets.WIF_SERVICE_ACCOUNT }}"
-          echo "Downloading CodeMender from Artifact Registry..."
-          gcloud artifacts generic download \
-            --project=cmoc-prod \
-            --location=us \
-            --repository=codemender-cli-production \
-            --package=cm \
-            --version=stable \
-            --name=cm-linux-amd64.zip \
-            --destination=./
+      # - name: Install CodeMender CLI
+      #   run: |
+      #     echo "WIF Provider: ${{ secrets.WIF_PROVIDER }}"
+      #     echo "Service Account: ${{ secrets.WIF_SERVICE_ACCOUNT }}"
+      #     echo "Downloading CodeMender from Artifact Registry..."
+      #     gcloud artifacts generic download \
+      #       --project=cmoc-prod \
+      #       --location=us \
+      #       --repository=codemender-cli-production \
+      #       --package=cm \
+      #       --version=stable \
+      #       --name=cm-linux-amd64.zip \
+      #       --destination=./
             
-          unzip -q cm-linux-amd64.zip
-          chmod +x cm
-          sudo mv cm /usr/local/bin/cm
-          cm --version
+      #     unzip -q cm-linux-amd64.zip
+      #     chmod +x cm
+      #     sudo mv cm /usr/local/bin/cm
+      #     cm --version
 
       # Configure Git Identity for the Bot
-      - name: Configure Git Identity
-        run: |
-          git config --global user.name "CodeMender Scan Bot"
-          git config --global user.email "codemender-bot@google.com"
+      # - name: Configure Git Identity
+      #   run: |
+      #     git config --global user.name "CodeMender Scan Bot"
+      #     git config --global user.email "codemender-bot@google.com"
 
       # The Core CodeMender Pipeline (Embedded Bash Logic)
       - name: Run CodeMender Scan
@@ -111,48 +111,52 @@ jobs:
           # echo "Listing .github dir...
           # echo "$(ls -la)"
           # cd ${{ inputs.repo_name }}
-          echo "🔍 Scanning codebase with Gemini 3.8 Flash..."
-          cm find ./target-repo --model gemini-3.8-flash -y 2>&1 | tee scan_output.log
+          echo "Listing /home/runner/work/.github/.github dir."
+          echo "$(ls -la /home/runner/work/.github/.github)"
+          echo "Listing /home/runner/work/.github/ dir."
+          echo "$(ls -la /home/runner/work/.github)"
+          # echo "🔍 Scanning codebase with Gemini 3.8 Flash..."
+          # cm find ./target-repo --model gemini-3.8-flash -y 2>&1 | tee scan_output.log
 
           # Query Findings
-          FINDINGS=$(cm report --status OPEN --format json)
-          FINDINGS_COUNT=$(echo "$FINDINGS" | jq '. | length')
+          # FINDINGS=$(cm report --status OPEN --format json)
+          # FINDINGS_COUNT=$(echo "$FINDINGS" | jq '. | length')
 
-          if [ "$FINDINGS_COUNT" -eq 0 ]; then
-            echo "🎉 Success! No open vulnerabilities found."
-            echo "NO_FINDINGS=true" >> "$GITHUB_ENV"
-            exit 0
-          fi
+          # if [ "$FINDINGS_COUNT" -eq 0 ]; then
+          #   echo "🎉 Success! No open vulnerabilities found."
+          #   echo "NO_FINDINGS=true" >> "$GITHUB_ENV"
+          #   exit 0
+          # fi
 
-          echo "⚠️ Found $FINDINGS_COUNT open findings. Starting remediation..."
-          echo "NO_FINDINGS=false" >> "$GITHUB_ENV"
-          echo "✅ Remediation pipeline completed successfully!"
+          # echo "⚠️ Found $FINDINGS_COUNT open findings. Starting remediation..."
+          # echo "NO_FINDINGS=false" >> "$GITHUB_ENV"
+          # echo "✅ Remediation pipeline completed successfully!"
 
       # Generate and Publish the Report
-      - name: Generate Security Report
-        run: |
-          echo "📊 Generating Markdown report..."
-          cm report --format md > codemender_summary.md
+      # - name: Generate Security Report
+      #   run: |
+      #     echo "📊 Generating Markdown report..."
+      #     cm report --format md > codemender_summary.md
 
-          # Extract the execution and token usage line from the scan log
-          TOKEN_SUMMARY=$(grep "Tokens:" scan_output.log | tail -n 1 || true)
+      #     # Extract the execution and token usage line from the scan log
+      #     TOKEN_SUMMARY=$(grep "Tokens:" scan_output.log | tail -n 1 || true)
 
-          # If the token summary was found, inject it at the top of the GitHub Step Summary
-          if [ -n "$TOKEN_SUMMARY" ]; then
-            echo "### 🪙 Execution & Token Usage" >> $GITHUB_STEP_SUMMARY
-            echo "> $TOKEN_SUMMARY" >> $GITHUB_STEP_SUMMARY
-            echo "---" >> $GITHUB_STEP_SUMMARY
-          fi
+      #     # If the token summary was found, inject it at the top of the GitHub Step Summary
+      #     if [ -n "$TOKEN_SUMMARY" ]; then
+      #       echo "### 🪙 Execution & Token Usage" >> $GITHUB_STEP_SUMMARY
+      #       echo "> $TOKEN_SUMMARY" >> $GITHUB_STEP_SUMMARY
+      #       echo "---" >> $GITHUB_STEP_SUMMARY
+      #     fi
 
-          echo "# CodeMender Scan Results" >> $GITHUB_STEP_SUMMARY
-          cat codemender_summary.md >> $GITHUB_STEP_SUMMARY
+      #     echo "# CodeMender Scan Results" >> $GITHUB_STEP_SUMMARY
+      #     cat codemender_summary.md >> $GITHUB_STEP_SUMMARY
 
       # Cleanup Sensitive Binaries (Best Practice)
-      - name: Cleanup
-        if: always()
-        run: |
-          rm -f cm-linux-amd64.zip
-          rm -f cm
-          rm -rf .cm_project
-          rm -rf .exploit/
-          rm -f gha-creds-*.json
+      # - name: Cleanup
+      #   if: always()
+      #   run: |
+      #     rm -f cm-linux-amd64.zip
+      #     rm -f cm
+      #     rm -rf .cm_project
+      #     rm -rf .exploit/
+      #     rm -f gha-creds-*.json
