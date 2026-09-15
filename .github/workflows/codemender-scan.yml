@@ -88,8 +88,8 @@ jobs:
           # EOF
 
           # Scan Phase (Cost-Optimized Model)
-          echo "🔍 Scanning codebase with Gemini 3.8 Flash..."
-          cm find ./target-repo --model gemini-3.8-flash -y 2>&1 | tee scan_output.log
+          echo "🔍 Scanning codebase with Gemini 3.7 Flash..."
+          cm find ./target-repo --model gemini-3.7-flash -y 2>&1 | tee scan_output.log
 
           # Query Findings
           FINDINGS=$(cm report --status OPEN --format json)
