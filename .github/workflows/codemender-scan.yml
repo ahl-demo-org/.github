@@ -13,11 +13,12 @@ jobs:
       id-token: write
 
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+      # - name: Checkout Repository
+      #   uses: actions/checkout@v4
+      #   with:
+      #     fetch-depth: 0
     
+      # Fetch and print repositories
       - name: Fetch and print repositories
         env:
           GH_TOKEN: ${{ secrets.ORG_READ_TOKEN }}
@@ -28,12 +29,12 @@ jobs:
           # gh api handles automatic pagination using --paginate
           gh api orgs/${{ github.repository_owner }}/repos --paginate --jq '.[].name'
 
-      # 1. Authenticate to Google Cloud securely
-      # - name: Authenticate to Google Cloud
-      #   uses: google-github-actions/auth@v2
-      #   with:
-      #     workload_identity_provider: "${{ secrets.WIF_PROVIDER }}"
-      #     service_account: "${{ secrets.WIF_SERVICE_ACCOUNT }}"
+      # Authenticate to Google Cloud securely
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: "${{ secrets.WIF_PROVIDER }}"
+          service_account: "${{ secrets.WIF_SERVICE_ACCOUNT }}"
 
       # NEW STEP: Set up the gcloud CLI
       # - name: Set up Google Cloud SDK
