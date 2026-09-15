@@ -8,7 +8,7 @@ jobs:
     steps:
       - name: Trigger task for all repos
         env:
-          GH_TOKEN: ${{ secrets.ORG_WORKFLOW_TOKEN }} 
+          GH_TOKEN: ${{ secrets.ORG_READ_TOKEN }} 
         run: |
           echo "GH Token: ${GH_TOKEN}"
           gh api orgs/${{ github.repository_owner }}/repos --paginate --jq '.[].name' | while read repo; do
