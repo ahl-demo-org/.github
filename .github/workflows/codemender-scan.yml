@@ -25,6 +25,7 @@ jobs:
           repository: ${{ github.repository_owner }}/${{ inputs.repo_name }}
           token: ${{ secrets.ORG_READ_TOKEN }} # Needs read/write access to the target repo
           fetch-depth: 0
+          path: target-repo
     
       # Fetch and print repositories
       # - name: Fetch and print repositories
@@ -100,19 +101,18 @@ jobs:
           # EOF
 
           # Scan Phase (Cost-Optimized Model)
-          echo "Landing directory..."
-          echo "$(pwd)"
-          echo "Going up one...
-          cd ..
-          echo "$(pwd)"
-          echo "Going into .github...
-          cd .github
-          echo "$(pwd)"
-          echo "Listing .github dir...
-          echo "$(ls -la)"
-          cd ${{ inputs.repo_name }}
-          echo "🔍 Scanning codebase with Gemini 3.5 Flash..."
-          cm find . --model gemini-3.5-flash -y 2>&1 | tee scan_output.log
+          # echo "Landing directory...$(pwd)"
+          # echo "Listing dir...
+          # cd ..
+          # echo "$(pwd)"
+          # echo "Going into .github...
+          # cd .github
+          # echo "$(pwd)"
+          # echo "Listing .github dir...
+          # echo "$(ls -la)"
+          # cd ${{ inputs.repo_name }}
+          echo "🔍 Scanning codebase with Gemini 3.8 Flash..."
+          cm find ./target-repo --model gemini-3.8-flash -y 2>&1 | tee scan_output.log
 
           # Query Findings
           FINDINGS=$(cm report --status OPEN --format json)
