@@ -2,6 +2,11 @@ name: CodeMender Scan & Token Report
 on:
   # Trigger manually via the GitHub Actions UI
   workflow_dispatch:
+    inputs:
+      repo_name:
+        description: 'The name of the repository to scan'
+        required: true
+        type: string
 
 jobs:
   codemender-scan:
@@ -13,9 +18,12 @@ jobs:
       id-token: write
 
     steps:
-      - name: Checkout Repository
+      # Checkout the TARGET repository instead of the central .github repo
+      - name: Checkout Target Repository
         uses: actions/checkout@v4
         with:
+          repository: ${{ github.repository_owner }}/${{ inputs.repo_name }}
+          token: ${{ secrets.ORG_WORKFLOW_TOKEN }} # Needs read/write access to the target repo
           fetch-depth: 0
     
       # Fetch and print repositories
