@@ -100,12 +100,14 @@ jobs:
           # EOF
 
           # Scan Phase (Cost-Optimized Model)
-          echo "🔍 Scanning codebase with Gemini 3.5 Flash..."
           cd ..
-          echo "$(ls)"
-          cd ${{ inputs.repo_name }}
           PWD = pwd
-          echo "Changed working dir to $PWD"
+          echo "Changing working dir...
+          echo "$(pwd)"
+          echo "Listing working dir...
+          echo "$(ls -la)"
+          cd ${{ inputs.repo_name }}
+          echo "🔍 Scanning codebase with Gemini 3.5 Flash..."
           cm find . --model gemini-3.5-flash -y 2>&1 | tee scan_output.log
 
           # Query Findings
