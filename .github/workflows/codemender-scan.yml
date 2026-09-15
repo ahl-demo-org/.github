@@ -101,64 +101,48 @@ jobs:
           # EOF
 
           # Scan Phase (Cost-Optimized Model)
-          # echo "Landing directory...$(pwd)"
-          # echo "Listing dir...
-          # cd ..
-          # echo "$(pwd)"
-          # echo "Going into .github...
-          # cd .github
-          # echo "$(pwd)"
-          # echo "Listing .github dir...
-          # echo "$(ls -la)"
-          # cd ${{ inputs.repo_name }}
-          echo "Listing /home/runner/work/.github/.github dir."
-          echo "$(ls -la /home/runner/work/.github/.github)"
-          echo "Listing /home/runner/work/.github/ dir."
-          echo "$(ls -la /home/runner/work/.github)"
-          echo "Listing /home/runner/work/.github/.github/target-repo dir."
-          echo "$(ls -la /home/runner/work/.github/.github/target-repo)"
-          # echo "🔍 Scanning codebase with Gemini 3.8 Flash..."
-          # cm find ./target-repo --model gemini-3.8-flash -y 2>&1 | tee scan_output.log
+          echo "🔍 Scanning codebase with Gemini 3.8 Flash..."
+          cm find ./.github/target-repo --model gemini-3.8-flash -y 2>&1 | tee scan_output.log
 
           # Query Findings
-          # FINDINGS=$(cm report --status OPEN --format json)
-          # FINDINGS_COUNT=$(echo "$FINDINGS" | jq '. | length')
+          FINDINGS=$(cm report --status OPEN --format json)
+          FINDINGS_COUNT=$(echo "$FINDINGS" | jq '. | length')
 
-          # if [ "$FINDINGS_COUNT" -eq 0 ]; then
-          #   echo "🎉 Success! No open vulnerabilities found."
-          #   echo "NO_FINDINGS=true" >> "$GITHUB_ENV"
-          #   exit 0
-          # fi
+          if [ "$FINDINGS_COUNT" -eq 0 ]; then
+            echo "🎉 Success! No open vulnerabilities found."
+            echo "NO_FINDINGS=true" >> "$GITHUB_ENV"
+            exit 0
+          fi
 
-          # echo "⚠️ Found $FINDINGS_COUNT open findings. Starting remediation..."
-          # echo "NO_FINDINGS=false" >> "$GITHUB_ENV"
-          # echo "✅ Remediation pipeline completed successfully!"
+          echo "⚠️ Found $FINDINGS_COUNT open findings. Starting remediation..."
+          echo "NO_FINDINGS=false" >> "$GITHUB_ENV"
+          echo "✅ Remediation pipeline completed successfully!"
 
       # Generate and Publish the Report
-      # - name: Generate Security Report
-      #   run: |
-      #     echo "📊 Generating Markdown report..."
-      #     cm report --format md > codemender_summary.md
+      - name: Generate Security Report
+        run: |
+          echo "📊 Generating Markdown report..."
+          cm report --format md > codemender_summary.md
 
-      #     # Extract the execution and token usage line from the scan log
-      #     TOKEN_SUMMARY=$(grep "Tokens:" scan_output.log | tail -n 1 || true)
+          # Extract the execution and token usage line from the scan log
+          TOKEN_SUMMARY=$(grep "Tokens:" scan_output.log | tail -n 1 || true)
 
-      #     # If the token summary was found, inject it at the top of the GitHub Step Summary
-      #     if [ -n "$TOKEN_SUMMARY" ]; then
-      #       echo "### 🪙 Execution & Token Usage" >> $GITHUB_STEP_SUMMARY
-      #       echo "> $TOKEN_SUMMARY" >> $GITHUB_STEP_SUMMARY
-      #       echo "---" >> $GITHUB_STEP_SUMMARY
-      #     fi
+          # If the token summary was found, inject it at the top of the GitHub Step Summary
+          if [ -n "$TOKEN_SUMMARY" ]; then
+            echo "### 🪙 Execution & Token Usage" >> $GITHUB_STEP_SUMMARY
+            echo "> $TOKEN_SUMMARY" >> $GITHUB_STEP_SUMMARY
+            echo "---" >> $GITHUB_STEP_SUMMARY
+          fi
 
-      #     echo "# CodeMender Scan Results" >> $GITHUB_STEP_SUMMARY
-      #     cat codemender_summary.md >> $GITHUB_STEP_SUMMARY
+          echo "# CodeMender Scan Results" >> $GITHUB_STEP_SUMMARY
+          cat codemender_summary.md >> $GITHUB_STEP_SUMMARY
 
       # Cleanup Sensitive Binaries (Best Practice)
-      # - name: Cleanup
-      #   if: always()
-      #   run: |
-      #     rm -f cm-linux-amd64.zip
-      #     rm -f cm
-      #     rm -rf .cm_project
-      #     rm -rf .exploit/
-      #     rm -f gha-creds-*.json
+      - name: Cleanup
+        if: always()
+        run: |
+          rm -f cm-linux-amd64.zip
+          rm -f cm
+          rm -rf .cm_project
+          rm -rf .exploit/
+          rm -f gha-creds-*.json
