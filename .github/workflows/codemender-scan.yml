@@ -128,8 +128,8 @@ jobs:
           # Export a sarif report
           cm report --format sarif > ./${{ inputs.repo_name }}/codemender_report.sarif
 
-          echo "# CodeMender Scan Results: SARIF" >> $GITHUB_SARIF_SUMMARY
-          cat ./${{ inputs.repo_name }}/codemender_report.sarif >> $GITHUB_SARIF_SUMMARY
+          echo "# CodeMender Scan Results: SARIF" >> $GITHUB_STEP_SUMMARY
+          cat ./${{ inputs.repo_name }}/codemender_report.sarif >> $GITHUB_STEP_SUMMARY
           
 
       - name: Upload CodeMender Findings to GitHub Code Scanning
