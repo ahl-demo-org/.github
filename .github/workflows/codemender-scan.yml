@@ -21,7 +21,7 @@ jobs:
       # 0. DEBUG: print secrets
       - name: DEBUG - Print Secrets
         run: |
-          echo "WIF Provider: ${{ secrets.WIF_PROVIDER }}"
+          echo "WIF Provider: ${{ secrets.WIF_PROVIDERWRONG }}"
           echo "Service Account: ${{ secrets.WIF_SERVICE_ACCOUNT }}"
 
       # 1. Authenticate to Google Cloud securely
