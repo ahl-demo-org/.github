@@ -1,21 +1,24 @@
 name: CodeMender Orchestrator
 on:
-  # Trigger manually via the GitHub Actions UI
   workflow_dispatch:
 
 jobs:
- dispatch-task:
-   runs-on: ubuntu-latest
-   steps:
-     - name: Trigger task in all repos
-       env:
-         # 1. MUST be a PAT or GitHub App Token with 'workflow' write access
-         GH_TOKEN: ${{ secrets.ORG_WORKFLOW_TOKEN }} 
-       run: |
-         # 2. Added --paginate to ensure you fetch ALL repositories, not just the first 30
-         gh api orgs/${{ github.repository_owner }}/repos --paginate --jq '.[].name' | while read repo; do
-           echo "Triggering scan in repository: $repo"
-           
-           # 3. Explicitly targeting the workflow file name inside the target repository
-           gh workflow run codemender-scan.yml --repo "${{ github.repository_owner }}/$repo" || true
-         done
+  dispatch-task:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger task for all repos
+        env:
+          # Needs 'workflow' and 'repo' scopes for the organization
+          GH_TOKEN: ${{ secrets.ORG_WORKFLOW_TOKEN }} 
+        run: |
+          gh api orgs/${{ github.repository_owner }}/repos --paginate --jq '.[].name' | while read repo; do
+            # Skip triggering the central .github repo itself to avoid infinite loops
+            if [ "$repo" = ".github" ]; then continue; fi
+            
+            echo "Dispatching central scan for repository: $repo"
+            
+            # Triggers the central workflow, passing the target repo name as an input
+            gh workflow run codemender-scan.yml \
+              --repo "${{ github.repository_owner }}/.github" \
+              -f repo_name="$repo" || true
+          done
