@@ -1,0 +1,16 @@
+name: CodeMender Orchestrator
+on:
+  # Trigger manually via the GitHub Actions UI
+  workflow_dispatch:
+
+jobs:
+ dispatch-task:
+   runs-on: ubuntu-latest
+   steps:
+     - name: Trigger task in all repos
+       env:
+         GH_TOKEN: ${{ secrets.ORG_READ_TOKEN }}
+       run: |
+         gh api orgs/${{ github.repository_owner }}/repos --jq '.[].name' | while read repo; do
+         gh workflow run codemender-scan.yml --repo "${{ github.repository_owner }}/$repo" || true
+         done
