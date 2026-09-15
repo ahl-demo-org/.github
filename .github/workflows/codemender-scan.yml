@@ -25,7 +25,7 @@ jobs:
           repository: ${{ github.repository_owner }}/${{ inputs.repo_name }}
           token: ${{ secrets.ORG_READ_TOKEN }} # Needs read/write access to the target repo
           fetch-depth: 0
-          path: target-repo
+          path: ${{ inputs.repo_name }}
 
       # Authenticate to Google Cloud securely
       - name: Authenticate to Google Cloud
@@ -89,7 +89,7 @@ jobs:
 
           # Scan Phase (Cost-Optimized Model)
           echo "🔍 Scanning codebase with Gemini 3.7 Flash..."
-          cm find ./target-repo --model gemini-3.7-flash -y 2>&1 | tee scan_output.log
+          cm find ./${{ inputs.repo_name }} --model gemini-3.7-flash -y 2>&1 | tee scan_output.log
 
           # Query Findings
           FINDINGS=$(cm report --status OPEN --format json)
