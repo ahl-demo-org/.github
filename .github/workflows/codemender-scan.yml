@@ -134,7 +134,7 @@ jobs:
 
       - name: Upload CodeMender Findings to GitHub Code Scanning
         if: env.NO_FINDINGS == 'false'
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
           # Points directly to the target repository where you want the alerts to display
           checkout_path: ${{ inputs.repo_name }}
