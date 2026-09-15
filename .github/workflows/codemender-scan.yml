@@ -115,8 +115,8 @@ jobs:
           echo "$(ls -la /home/runner/work/.github/.github)"
           echo "Listing /home/runner/work/.github/ dir."
           echo "$(ls -la /home/runner/work/.github)"
-          echo "Listing /home/runner/work/.github/target-repo dir."
-          echo "$(ls -la /home/runner/work/.github/target-repo)"
+          echo "Listing /home/runner/work/.github/.github/target-repo dir."
+          echo "$(ls -la /home/runner/work/.github/.github/target-repo)"
           # echo "🔍 Scanning codebase with Gemini 3.8 Flash..."
           # cm find ./target-repo --model gemini-3.8-flash -y 2>&1 | tee scan_output.log
 
