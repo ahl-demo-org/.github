@@ -9,8 +9,13 @@ jobs:
    steps:
      - name: Trigger task in all repos
        env:
-         GH_TOKEN: ${{ secrets.ORG_READ_TOKEN }}
+         # 1. MUST be a PAT or GitHub App Token with 'workflow' write access
+         GH_TOKEN: ${{ secrets.ORG_WORKFLOW_TOKEN }} 
        run: |
-         gh api orgs/${{ github.repository_owner }}/repos --jq '.[].name' | while read repo; do
-         gh workflow run codemender-scan.yml --repo "${{ github.repository_owner }}/$repo" || true
+         # 2. Added --paginate to ensure you fetch ALL repositories, not just the first 30
+         gh api orgs/${{ github.repository_owner }}/repos --paginate --jq '.[].name' | while read repo; do
+           echo "Triggering scan in repository: $repo"
+           
+           # 3. Explicitly targeting the workflow file name inside the target repository
+           gh workflow run codemender-scan.yml --repo "${{ github.repository_owner }}/$repo" || true
          done
