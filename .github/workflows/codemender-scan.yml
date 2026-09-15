@@ -101,7 +101,7 @@ jobs:
 
           # Scan Phase (Cost-Optimized Model)
           cd ..
-          PWD = pwd
+          # PWD = pwd
           echo "Changing working dir...
           echo "$(pwd)"
           echo "Listing working dir...
