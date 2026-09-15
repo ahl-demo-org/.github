@@ -93,23 +93,23 @@ jobs:
 
           # Scan Phase (Cost-Optimized Model)
           echo "🔍 Scanning codebase with Gemini 3.5 Flash..."
-          # cm find . --model gemini-3.5-flash -y 2>&1 | tee scan_output.log
+          cm find . --model gemini-3.5-flash -y 2>&1 | tee scan_output.log
 
           # Query Findings
-          # FINDINGS=$(cm report --status OPEN --format json)
-          # FINDINGS_COUNT=$(echo "$FINDINGS" | jq '. | length')
+          FINDINGS=$(cm report --status OPEN --format json)
+          FINDINGS_COUNT=$(echo "$FINDINGS" | jq '. | length')
 
-          # if [ "$FINDINGS_COUNT" -eq 0 ]; then
-          #   echo "🎉 Success! No open vulnerabilities found."
-          #   echo "NO_FINDINGS=true" >> "$GITHUB_ENV"
-          #   exit 0
-          # fi
+          if [ "$FINDINGS_COUNT" -eq 0 ]; then
+            echo "🎉 Success! No open vulnerabilities found."
+            echo "NO_FINDINGS=true" >> "$GITHUB_ENV"
+            exit 0
+          fi
 
-          # echo "⚠️ Found $FINDINGS_COUNT open findings. Starting remediation..."
-          # echo "NO_FINDINGS=false" >> "$GITHUB_ENV"
-          # echo "✅ Remediation pipeline completed successfully!"
+          echo "⚠️ Found $FINDINGS_COUNT open findings. Starting remediation..."
+          echo "NO_FINDINGS=false" >> "$GITHUB_ENV"
+          echo "✅ Remediation pipeline completed successfully!"
 
-      # 5. Generate and Publish the Report
+      # Generate and Publish the Report
       - name: Generate Security Report
         run: |
           echo "📊 Generating Markdown report..."
