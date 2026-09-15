@@ -100,11 +100,15 @@ jobs:
           # EOF
 
           # Scan Phase (Cost-Optimized Model)
-          cd ..
-          # PWD = pwd
-          echo "Changing working dir...
+          echo "Landing directory..."
           echo "$(pwd)"
-          echo "Listing working dir...
+          echo "Going up one...
+          cd ..
+          echo "$(pwd)"
+          echo "Going into .github...
+          cd .github
+          echo "$(pwd)"
+          echo "Listing .github dir...
           echo "$(ls -la)"
           cd ${{ inputs.repo_name }}
           echo "🔍 Scanning codebase with Gemini 3.5 Flash..."
