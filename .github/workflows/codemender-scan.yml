@@ -66,10 +66,10 @@ jobs:
       - name: Run CodeMender Scan
         run: |
           set -e
-          echo "🚀 Starting CodeMender Nightly Remediation..."
+          echo "🚀 Starting CodeMender Scan..."
 
           # Initialize Workspace and create optimized config.yaml
-          # cm init
+          cm init
           # cat <<EOF > ~/.codemender/config.yaml
           # project_paths:
           #   - "$GITHUB_WORKSPACE"
