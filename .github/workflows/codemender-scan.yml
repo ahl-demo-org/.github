@@ -18,11 +18,15 @@ jobs:
         with:
           fetch-depth: 0
     
-      # 0. DEBUG: print secrets
-      - name: DEBUG - Print Secrets
+      - name: Fetch and print repositories
+        env:
+          GH_TOKEN: ${{ secrets.ORG_READ_TOKEN }}
         run: |
-          echo "WIF Provider: ${{ secrets.WIF_PROVIDERWRONG }}"
-          echo "Service Account: ${{ secrets.WIF_SERVICE_ACCOUNT }}"
+          echo "Listing all repositories for organization: ${{ github.repository_owner }}"
+          echo "--------------------------------------------------"
+          
+          # gh api handles automatic pagination using --paginate
+          gh api orgs/${{ github.repository_owner }}/repos --paginate --jq '.[].name'
 
       # 1. Authenticate to Google Cloud securely
       # - name: Authenticate to Google Cloud
