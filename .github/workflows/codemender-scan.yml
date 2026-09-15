@@ -16,6 +16,7 @@ jobs:
       contents: write
       pull-requests: write
       id-token: write
+      security-events: write
 
     steps:
       # Checkout the TARGET repository instead of the central .github repo
