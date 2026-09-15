@@ -40,30 +40,30 @@ jobs:
       # - name: Set up Google Cloud SDK
       #   uses: google-github-actions/setup-gcloud@v2
 
-      # 2. Download and Install CodeMender On-The-Fly
-      # - name: Install CodeMender CLI
-      #   run: |
-      #     echo "WIF Provider: ${{ secrets.WIF_PROVIDER }}"
-      #     echo "Service Account: ${{ secrets.WIF_SERVICE_ACCOUNT }}"
-          # echo "Downloading CodeMender from Artifact Registry..."
-          # gcloud artifacts generic download \
-          #   --project=cmoc-prod \
-          #   --location=us \
-          #   --repository=codemender-cli-production \
-          #   --package=cm \
-          #   --version=stable \
-          #   --name=cm-linux-amd64.zip \
-          #   --destination=./
+      # Download and Install CodeMender On-The-Fly
+      - name: Install CodeMender CLI
+        run: |
+          echo "WIF Provider: ${{ secrets.WIF_PROVIDER }}"
+          echo "Service Account: ${{ secrets.WIF_SERVICE_ACCOUNT }}"
+          echo "Downloading CodeMender from Artifact Registry..."
+          gcloud artifacts generic download \
+            --project=cmoc-prod \
+            --location=us \
+            --repository=codemender-cli-production \
+            --package=cm \
+            --version=stable \
+            --name=cm-linux-amd64.zip \
+            --destination=./
             
-          # unzip -q cm-linux-amd64.zip
-          # chmod +x cm
-          # sudo mv cm /usr/local/bin/cm
-          # cm --version
+          unzip -q cm-linux-amd64.zip
+          chmod +x cm
+          sudo mv cm /usr/local/bin/cm
+          cm --version
 
-      # 3. Configure Git Identity for the Bot
+      # Configure Git Identity for the Bot
       - name: Configure Git Identity
         run: |
-          git config --global user.name "CodeMender Remediation Bot"
+          git config --global user.name "CodeMender Scan Bot"
           git config --global user.email "codemender-bot@google.com"
 
       # 4. The Core CodeMender Pipeline (Embedded Bash Logic)
