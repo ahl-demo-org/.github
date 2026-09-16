@@ -163,20 +163,17 @@ jobs:
                       uri = phys.get("artifactLocation", {}).get("uri", "")
                       if repo_name and repo_name in uri:
                           relative_path = uri
-                          print(f"Repo name: {repo_name}, Relative path: {relative_path}")
+
                           # Strip absolute runner path strings if present
                           if "/home/runner/work/" in relative_path:
                               relative_path = relative_path.split(repo_name + "/")[-1]
-                              print(f"Line 169: Relative path: {relative_path}")
                           
                           # Strip the repo directory prefix if it still remains at the front
                           if repo_name and relative_path.startswith(repo_name + "/"):
                               relative_path = relative_path[len(repo_name + "/"):]
-                              print(f"Line 174: Relative path: {relative_path}")
                               
                           # Clean up any residual formatting problems
                           relative_path = relative_path.lstrip("/")
-                          print(f"Line 178: Relative path: {relative_path}")
                           
                           phys["artifactLocation"]["uri"] = relative_path
                           # Explicitly attach the GitHub checkout directory hook
@@ -184,6 +181,7 @@ jobs:
                           
                           # 3. Add region line parsing if found in the text (e.g., lines 13-15)
                           line_match = re.search(r"lines (\d+)-(\d+)", full_text)
+                          print(f"Line match: {str(line_match)}")
                           if line_match:
                               phys["region"] = {
                                   "startLine": int(line_match.group(1)),
