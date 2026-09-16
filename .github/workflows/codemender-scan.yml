@@ -208,7 +208,7 @@ jobs:
           # Save corrected SARIF
           with open("output.sarif", "w") as f:
               f.write(json.dump(data, f, indent=2))
-              print(json.dump(data, f, indent=2))
+              print(json.dump(data, f, indent=2))'
 
       
       # Upload the SARIF payload directly to the target repository using the GitHub CLI
