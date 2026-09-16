@@ -162,8 +162,18 @@ jobs:
                       phys = loc.get("physicalLocation", {})
                       uri = phys.get("artifactLocation", {}).get("uri", "")
                       if repo_name and repo_name in uri:
-                          # Split by repo name to catch whatever comes after it
-                          relative_path = uri.split(repo_name + "/")[-1]
+                          relative_path = uri
+                          # Strip absolute runner path strings if present
+                          if "/home/runner/work/" in relative_path:
+                              relative_path = relative_path.split(repo_name + "/")[-1]
+                          
+                          # Strip the repo directory prefix if it still remains at the front
+                          if repo_name and relative_path.startswith(repo_name + "/"):
+                              relative_path = relative_path[len(repo_name + "/"):]
+                              
+                          # Clean up any residual formatting problems
+                          relative_path = relative_path.lstrip("/")
+                          
                           phys["artifactLocation"]["uri"] = relative_path
                           # Explicitly attach the GitHub checkout directory hook
                           phys["artifactLocation"]["uriBaseId"] = "%SRCROOT%"
