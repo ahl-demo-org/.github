@@ -133,20 +133,85 @@ jobs:
           cat ./${{ inputs.repo_name }}/codemender_report.sarif >> $GITHUB_STEP_SUMMARY
           
 
-      # - name: Upload CodeMender Findings to GitHub Code Scanning
-      #   if: env.NO_FINDINGS == 'false'
-      #   uses: github/codeql-action/upload-sarif@v4
-      #   with:
-      #     # Points directly to the target repository where you want the alerts to display
-      #     checkout_path: ${{ inputs.repo_name }}
-      #     # The file location of the exported SARIF
-      #     sarif_file: ${{ inputs.repo_name }}/codemender_report.sarif
-      #     # Requires a token with 'security-events: write' permissions on the target repo
-      #     token: ${{ secrets.ORG_READ_TOKEN }}
+      - name: Format SARIF Report for GitHub UI
+        run: |
+          python3 -c '
+          import json, re, os
 
-      # Upload the SARIF payload directly to the target repository via the REST API
-            # Upload the SARIF payload directly to the target repository via the REST API
-            # Upload the SARIF payload directly to the target repository using the GitHub CLI
+          # Load raw SARIF
+          with open("./${{ inputs.repo_name }}/codemender_report.sarif", "r") as f:
+              data = json.load(f)
+
+          # GitHub environment variable to extract relative path dynamically
+          repo_name = os.environ.get("GITHUB_REPOSITORY", "").split("/")[-1]
+          
+          for run in data.get("runs", []):
+              # 1. Initialize rules array if it does not exist
+              driver = run.get("tool", {}).get("driver", {})
+              if "rules" not in driver:
+                  driver["rules"] = []
+                  
+              rules_map = {r["id"]: r for r in driver["rules"]}
+              
+              for result in run.get("results", []):
+                  rule_id = result.get("ruleId")
+                  full_text = result.get("message", {}).get("text", "")
+                  
+                  # 2. Extract relative paths (removes /home/runner/work/... prefix)
+                  for loc in result.get("locations", []):
+                      phys = loc.get("physicalLocation", {})
+                      uri = phys.get("artifactLocation", {}).get("uri", "")
+                      if repo_name and repo_name in uri:
+                          # Split by repo name to catch whatever comes after it
+                          relative_path = uri.split(repo_name + "/")[-1]
+                          phys["artifactLocation"]["uri"] = relative_path
+                          
+                          # 3. Add region line parsing if found in the text (e.g., lines 13-15)
+                          line_match = re.search(r"lines (\d+)-(\d+)", full_text)
+                          if line_match:
+                              phys["region"] = {
+                                  "startLine": int(line_match.group(1)),
+                                  "endLine": int(line_match.group(2))
+                              }
+
+                  # 4. Format description text into Markdown
+                  # Extract summary (everything before the first double newline)
+                  summary = full_text.split("\n\n")[0] if "\n\n" in full_text else full_text
+                  summary = summary.split(": ")[-1] if ": " in summary else summary
+                  result["message"]["text"] = summary
+                  
+                  # Format markdown components
+                  md_text = full_text
+                  md_text = md_text.replace("Data Path:\n", "### Data Path\n")
+                  md_text = md_text.replace("- Source:", "* **Source:**")
+                  md_text = md_text.replace("- Sanitization/Validation:", "* **Sanitization/Validation:**")
+                  md_text = md_text.replace("- Sink:", "* **Sink:**")
+                  md_text = md_text.replace("Conceptual Exploit:\n", "### Conceptual Exploit\n")
+                  
+                  # Convert HTTP requests/responses into code blocks if present
+                  md_text = md_text.replace("GET / HTTP/1.1\nHost: example.com", "```http\nGET / HTTP/1.1\nHost: example.com\n```")
+                  md_text = md_text.replace("HTTP/1.1 200 OK\nContent-Type: text/html; charset=utf-8\n\n", "```http\nHTTP/1.1 200 OK\nContent-Type: text/html; charset=utf-8\n\n")
+                  md_text = md_text.replace("Public IP: <code>...</code>\n\n", "Public IP: <code>...</code>\n```\n\n")
+                  
+                  # 5. Populate Rule definitions
+                  if rule_id not in rules_map:
+                      new_rule = {
+                          "id": rule_id,
+                          "shortDescription": {"text": rule_id},
+                          "help": {"markdown": md_text}
+                      }
+                      driver["rules"].append(new_rule)
+                      rules_map[rule_id] = new_rule
+                  else:
+                      rules_map[rule_id]["help"]["markdown"] = md_text
+
+          # Save corrected SARIF
+          with open("output.sarif", "w") as f:
+              f.write(json.dump(data, f, indent=2))
+              print(json.dump(data, f, indent=2))
+
+      
+      # Upload the SARIF payload directly to the target repository using the GitHub CLI
       - name: Upload SARIF directly via GitHub CLI
         if: env.NO_FINDINGS == 'false'
         env:
@@ -155,7 +220,7 @@ jobs:
           TARGET_REPO: ${{ inputs.repo_name }}
         run: |
           # 1. Compress the SARIF file into GZIP Base64 format as required by the API
-          SARIF_BASE64=$(gzip -c "${TARGET_REPO}/codemender_report.sarif" | base64 -w 0)
+          SARIF_BASE64=$(gzip -c "output.sarif" | base64 -w 0)
           
           # 2. Extract the exact commit hash of the checked-out codebase
           COMMIT_SHA=$(git -C "${TARGET_REPO}" rev-parse HEAD)
