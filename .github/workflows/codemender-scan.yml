@@ -69,8 +69,10 @@ jobs:
           set -e
           echo "🚀 Starting CodeMender Scan..."
 
-          # Initialize Workspace and create optimized config.yaml
+          # Initialize Workspace
           cm init
+
+          # Optional config.yaml updates
           # cat <<EOF > ~/.codemender/config.yaml
           # project_paths:
           #   - "$GITHUB_WORKSPACE"
@@ -238,67 +240,6 @@ jobs:
                   }
               ]
           }
-          
-          # for run in data.get("runs", []):
-          #     # 1. Initialize rules array if it does not exist
-          #     driver = run.get("tool", {}).get("driver", {})
-          #     if "rules" not in driver:
-          #         driver["rules"] = []
-                  
-          #     rules_map = {r["id"]: r for r in driver["rules"]}
-              
-          #     for result in run.get("results", []):
-          #         rule_id = result.get("ruleId")
-          #         full_text = result.get("message", {}).get("text", "")
-                  
-          #         # 2. Extract relative paths (removes /home/runner/work/... prefix)
-          #         for loc in result.get("locations", []):
-          #             phys = loc.get("physicalLocation", {})
-          #             uri = phys.get("artifactLocation", {}).get("uri", "")
-          #             if repo_name and repo_name in uri:
-          #                 relative_path = uri
-
-          #                 # Strip absolute runner path strings if present
-          #                 if "/home/runner/work/" in relative_path:
-          #                     relative_path = relative_path.split(repo_name + "/")[-1]
-                          
-          #                 # Strip the repo directory prefix if it still remains at the front
-          #                 if repo_name and relative_path.startswith(repo_name + "/"):
-          #                     relative_path = relative_path[len(repo_name + "/"):]
-                              
-          #                 # Clean up any residual formatting problems
-          #                 relative_path = relative_path.lstrip("/")
-                          
-          #                 phys["artifactLocation"]["uri"] = relative_path
-          #                 # Explicitly attach the GitHub checkout directory hook
-          #                 phys["artifactLocation"]["uriBaseId"] = "%SRCROOT%"
-                          
-          #                 # 3. Add region line parsing if found in the text (e.g., lines 13-15)
-          #                 line_match = re.search(r"lines (\d+)-(\d+)", full_text)
-          #                 print(f"Line match: {str(line_match)}")
-          #                 if line_match:
-          #                     phys["region"] = {
-          #                         "startLine": int(line_match.group(1)),
-          #                         "endLine": int(line_match.group(2))
-          #                     }
-
-          #         # 4. Format description text into Markdown
-          #         # Extract summary (everything before the first double newline)
-          #         summary = full_text.split("\n\n")[0] if "\n\n" in full_text else full_text
-          #         summary = summary.split(": ")[-1] if ": " in summary else summary
-          #         result["message"]["text"] = summary
-                  
-          #         # 5. Populate Rule definitions
-          #         if rule_id not in rules_map:
-          #             new_rule = {
-          #                 "id": rule_id,
-          #                 "shortDescription": {"text": rule_id},
-          #                 "help": {"markdown": full_text}
-          #             }
-          #             driver["rules"].append(new_rule)
-          #             rules_map[rule_id] = new_rule
-          #         else:
-          #             rules_map[rule_id]["help"]["markdown"] = md_text
 
           # Save corrected SARIF
           with open("output.sarif", "w") as f:
