@@ -162,8 +162,8 @@ jobs:
                       phys = loc.get("physicalLocation", {})
                       uri = phys.get("artifactLocation", {}).get("uri", "")
                       if repo_name and repo_name in uri:
-                          print(f"Relative path: {relative_path}")
                           relative_path = uri
+                          print(f"Relative path: {relative_path}")
                           # Strip absolute runner path strings if present
                           if "/home/runner/work/" in relative_path:
                               relative_path = relative_path.split(repo_name + "/")[-1]
