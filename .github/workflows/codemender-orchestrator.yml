@@ -14,6 +14,7 @@ jobs:
           gh api orgs/${{ github.repository_owner }}/repos --paginate --jq '.[].name' | while read repo; do
             # Skip triggering the central .github repo itself to avoid infinite loops
             if [ "$repo" = ".github" ]; then continue; fi
+            if [ "$repo" = "demo-app-2" ]; then continue; fi
             
             echo "Dispatching central scan for repository: $repo"
             
