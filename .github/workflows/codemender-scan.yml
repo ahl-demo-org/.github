@@ -166,7 +166,8 @@ jobs:
 
               # Calculate relative_path for location uri
               file_path = finding.get("file_path", "unknown")
-              if repo_name and repo_name in uri:
+              relative_path = ""
+              if repo_name and repo_name in file_path:
                   relative_path = file_path
 
                   # Strip absolute runner path strings if present
