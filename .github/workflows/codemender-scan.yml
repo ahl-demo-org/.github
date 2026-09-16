@@ -181,24 +181,24 @@ jobs:
                   result["message"]["text"] = summary
                   
                   # Format markdown components
-                  md_text = full_text
-                  md_text = md_text.replace("Data Path:\n", "### Data Path\n")
-                  md_text = md_text.replace("- Source:", "* **Source:**")
-                  md_text = md_text.replace("- Sanitization/Validation:", "* **Sanitization/Validation:**")
-                  md_text = md_text.replace("- Sink:", "* **Sink:**")
-                  md_text = md_text.replace("Conceptual Exploit:\n", "### Conceptual Exploit\n")
+                  # md_text = full_text
+                  # md_text = md_text.replace("Data Path:\n", "### Data Path\n")
+                  # md_text = md_text.replace("- Source:", "* **Source:**")
+                  # md_text = md_text.replace("- Sanitization/Validation:", "* **Sanitization/Validation:**")
+                  # md_text = md_text.replace("- Sink:", "* **Sink:**")
+                  # md_text = md_text.replace("Conceptual Exploit:\n", "### Conceptual Exploit\n")
                   
-                  # Convert HTTP requests/responses into code blocks if present
-                  md_text = md_text.replace("GET / HTTP/1.1\nHost: example.com", "```http\nGET / HTTP/1.1\nHost: example.com\n```")
-                  md_text = md_text.replace("HTTP/1.1 200 OK\nContent-Type: text/html; charset=utf-8\n\n", "```http\nHTTP/1.1 200 OK\nContent-Type: text/html; charset=utf-8\n\n")
-                  md_text = md_text.replace("Public IP: <code>...</code>\n\n", "Public IP: <code>...</code>\n```\n\n")
+                  # # Convert HTTP requests/responses into code blocks if present
+                  # md_text = md_text.replace("GET / HTTP/1.1\nHost: example.com", "```http\nGET / HTTP/1.1\nHost: example.com\n```")
+                  # md_text = md_text.replace("HTTP/1.1 200 OK\nContent-Type: text/html; charset=utf-8\n\n", "```http\nHTTP/1.1 200 OK\nContent-Type: text/html; charset=utf-8\n\n")
+                  # md_text = md_text.replace("Public IP: <code>...</code>\n\n", "Public IP: <code>...</code>\n```\n\n")
                   
                   # 5. Populate Rule definitions
                   if rule_id not in rules_map:
                       new_rule = {
                           "id": rule_id,
                           "shortDescription": {"text": rule_id},
-                          "help": {"markdown": md_text}
+                          "help": {"markdown": full_text}
                       }
                       driver["rules"].append(new_rule)
                       rules_map[rule_id] = new_rule
@@ -207,8 +207,8 @@ jobs:
 
           # Save corrected SARIF
           with open("output.sarif", "w") as f:
-              f.write(json.dump(data, f, indent=2))
-              print(json.dump(data, f, indent=2))'
+              f.write(json.dumps(data, indent=2))
+              print(json.dumps(data, indent=2))'
 
       
       # Upload the SARIF payload directly to the target repository using the GitHub CLI
