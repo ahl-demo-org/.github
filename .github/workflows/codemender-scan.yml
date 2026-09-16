@@ -126,11 +126,11 @@ jobs:
           echo "# CodeMender Scan Results" >> $GITHUB_STEP_SUMMARY
           cat codemender_summary.md >> $GITHUB_STEP_SUMMARY
 
-          # Export a sarif report
-          cm report --format sarif > ./${{ inputs.repo_name }}/codemender_report.sarif
+          # Export a json report
+          cm report --format json > ./${{ inputs.repo_name }}/codemender_report.json
 
-          echo "# CodeMender Scan Results: SARIF" >> $GITHUB_STEP_SUMMARY
-          cat ./${{ inputs.repo_name }}/codemender_report.sarif >> $GITHUB_STEP_SUMMARY
+          echo "# CodeMender Scan Results: JSON" >> $GITHUB_STEP_SUMMARY
+          cat ./${{ inputs.repo_name }}/codemender_report.json >> $GITHUB_STEP_SUMMARY
           
 
       - name: Format SARIF Report for GitHub UI
@@ -138,78 +138,171 @@ jobs:
           python3 -c '
           import json, re, os
 
-          # Load raw SARIF
-          with open("./${{ inputs.repo_name }}/codemender_report.sarif", "r") as f:
-              data = json.load(f)
-
-          # GitHub environment variable to extract relative path dynamically
+          # GitHub input variable to extract relative path dynamically
           repo_name = "${{ inputs.repo_name }}"
-          
-          for run in data.get("runs", []):
-              # 1. Initialize rules array if it does not exist
-              driver = run.get("tool", {}).get("driver", {})
-              if "rules" not in driver:
-                  driver["rules"] = []
-                  
-              rules_map = {r["id"]: r for r in driver["rules"]}
-              
-              for result in run.get("results", []):
-                  rule_id = result.get("ruleId")
-                  full_text = result.get("message", {}).get("text", "")
-                  
-                  # 2. Extract relative paths (removes /home/runner/work/... prefix)
-                  for loc in result.get("locations", []):
-                      phys = loc.get("physicalLocation", {})
-                      uri = phys.get("artifactLocation", {}).get("uri", "")
-                      if repo_name and repo_name in uri:
-                          relative_path = uri
 
-                          # Strip absolute runner path strings if present
-                          if "/home/runner/work/" in relative_path:
-                              relative_path = relative_path.split(repo_name + "/")[-1]
-                          
-                          # Strip the repo directory prefix if it still remains at the front
-                          if repo_name and relative_path.startswith(repo_name + "/"):
-                              relative_path = relative_path[len(repo_name + "/"):]
-                              
-                          # Clean up any residual formatting problems
-                          relative_path = relative_path.lstrip("/")
-                          
-                          phys["artifactLocation"]["uri"] = relative_path
-                          # Explicitly attach the GitHub checkout directory hook
-                          phys["artifactLocation"]["uriBaseId"] = "%SRCROOT%"
-                          
-                          # 3. Add region line parsing if found in the text (e.g., lines 13-15)
-                          line_match = re.search(r"lines (\d+)-(\d+)", full_text)
-                          print(f"Line match: {str(line_match)}")
-                          if line_match:
-                              phys["region"] = {
-                                  "startLine": int(line_match.group(1)),
-                                  "endLine": int(line_match.group(2))
-                              }
+          # Load JSON export
+          with open("./${{ inputs.repo_name }}/codemender_report.json", "r") as f:
+              findings = json.load(f)
 
-                  # 4. Format description text into Markdown
-                  # Extract summary (everything before the first double newline)
-                  summary = full_text.split("\n\n")[0] if "\n\n" in full_text else full_text
-                  summary = summary.split(": ")[-1] if ": " in summary else summary
-                  result["message"]["text"] = summary
+          # Initialilze lists and sets
+          rules = []
+          results = []
+          seen_rules = set()
+      
+          # Map custom severity scales to SARIF levels
+          severity_map = {
+              "CRITICAL": "error",
+              "HIGH": "error",
+              "MEDIUM": "warning",
+              "LOW": "note",
+              "INFO": "note"
+          }
+
+          for finding in findings:
+              rule_id = finding.get("title", "Unknown-Rule")
+              short_desc = finding.get("title", "Security Finding")
+              analysis = finding.get("analysis", "")
+
+              # Calculate relative_path for location uri
+              file_path = finding.get("file_path", "unknown")
+              if repo_name and repo_name in uri:
+                  relative_path = file_path
+
+                  # Strip absolute runner path strings if present
+                  if "/home/runner/work/" in relative_path:
+                      relative_path = relative_path.split(repo_name + "/")[-1]
                   
-                  # 5. Populate Rule definitions
-                  if rule_id not in rules_map:
-                      new_rule = {
-                          "id": rule_id,
-                          "shortDescription": {"text": rule_id},
-                          "help": {"markdown": full_text}
+                  # Strip the repo directory prefix if it still remains at the front
+                  if repo_name and relative_path.startswith(repo_name + "/"):
+                      relative_path = relative_path[len(repo_name + "/"):]
+                      
+                  # Clean up any residual formatting problems
+                  relative_path = relative_path.lstrip("/")
+
+              # Populate Rules Array (Ensure each rule ID is unique in the driver definitions)
+              if rule_id not in seen_rules:
+                  rules.append({
+                      "id": rule_id,
+                      "shortDescription": {
+                          "text": short_desc
+                      },
+                      "help": {
+                          "markdown": f"{short_desc}: {analysis}"
                       }
-                      driver["rules"].append(new_rule)
-                      rules_map[rule_id] = new_rule
-                  else:
-                      rules_map[rule_id]["help"]["markdown"] = md_text
+                  })
+                  seen_rules.add(rule_id)
+      
+              # Map Severity to SARIF Level
+              raw_severity = finding.get("severity", "MEDIUM").upper()
+              level = severity_map.get(raw_severity, "warning")
+      
+              # Populate Results Array
+              results.append({
+                  "ruleId": rule_id,
+                  "level": level,
+                  "message": {
+                      "text": analysis
+                  },
+                  "locations": [
+                      {
+                          "physicalLocation": {
+                              "artifactLocation": {
+                                  "uri": relative_path,
+                                  "uriBaseId": "%SRCROOT%"
+                              },
+                              "region": {
+                                  "startLine": finding.get("start_line", 1),
+                                  "endLine": finding.get("end_line", 1)
+                              }
+                          }
+                      }
+                  ]
+              })
+
+          # Construct Final SARIF Structure
+          sarif_output = {
+              "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/main/sarif-2.1/schema/sarif-schema-2.1.0.json",
+              "version": "2.1.0",
+              "runs": [
+                  {
+                      "tool": {
+                          "driver": {
+                              "name": "CodeMender",
+                              "version": "0.7.0",
+                              "rules": rules
+                          }
+                      },
+                      "results": results
+                  }
+              ]
+          }
+          
+          # for run in data.get("runs", []):
+          #     # 1. Initialize rules array if it does not exist
+          #     driver = run.get("tool", {}).get("driver", {})
+          #     if "rules" not in driver:
+          #         driver["rules"] = []
+                  
+          #     rules_map = {r["id"]: r for r in driver["rules"]}
+              
+          #     for result in run.get("results", []):
+          #         rule_id = result.get("ruleId")
+          #         full_text = result.get("message", {}).get("text", "")
+                  
+          #         # 2. Extract relative paths (removes /home/runner/work/... prefix)
+          #         for loc in result.get("locations", []):
+          #             phys = loc.get("physicalLocation", {})
+          #             uri = phys.get("artifactLocation", {}).get("uri", "")
+          #             if repo_name and repo_name in uri:
+          #                 relative_path = uri
+
+          #                 # Strip absolute runner path strings if present
+          #                 if "/home/runner/work/" in relative_path:
+          #                     relative_path = relative_path.split(repo_name + "/")[-1]
+                          
+          #                 # Strip the repo directory prefix if it still remains at the front
+          #                 if repo_name and relative_path.startswith(repo_name + "/"):
+          #                     relative_path = relative_path[len(repo_name + "/"):]
+                              
+          #                 # Clean up any residual formatting problems
+          #                 relative_path = relative_path.lstrip("/")
+                          
+          #                 phys["artifactLocation"]["uri"] = relative_path
+          #                 # Explicitly attach the GitHub checkout directory hook
+          #                 phys["artifactLocation"]["uriBaseId"] = "%SRCROOT%"
+                          
+          #                 # 3. Add region line parsing if found in the text (e.g., lines 13-15)
+          #                 line_match = re.search(r"lines (\d+)-(\d+)", full_text)
+          #                 print(f"Line match: {str(line_match)}")
+          #                 if line_match:
+          #                     phys["region"] = {
+          #                         "startLine": int(line_match.group(1)),
+          #                         "endLine": int(line_match.group(2))
+          #                     }
+
+          #         # 4. Format description text into Markdown
+          #         # Extract summary (everything before the first double newline)
+          #         summary = full_text.split("\n\n")[0] if "\n\n" in full_text else full_text
+          #         summary = summary.split(": ")[-1] if ": " in summary else summary
+          #         result["message"]["text"] = summary
+                  
+          #         # 5. Populate Rule definitions
+          #         if rule_id not in rules_map:
+          #             new_rule = {
+          #                 "id": rule_id,
+          #                 "shortDescription": {"text": rule_id},
+          #                 "help": {"markdown": full_text}
+          #             }
+          #             driver["rules"].append(new_rule)
+          #             rules_map[rule_id] = new_rule
+          #         else:
+          #             rules_map[rule_id]["help"]["markdown"] = md_text
 
           # Save corrected SARIF
           with open("output.sarif", "w") as f:
-              f.write(json.dumps(data, indent=2))
-              print(json.dumps(data, indent=2))'
+              f.write(json.dumps(sarif_output, indent=2))
+              print(json.dumps(sarif_output, indent=2))'
 
       
       # Upload the SARIF payload directly to the target repository using the GitHub CLI
