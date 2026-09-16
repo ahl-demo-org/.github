@@ -173,6 +173,8 @@ jobs:
                               
                           # Clean up any residual formatting problems
                           relative_path = relative_path.lstrip("/")
+
+                          print(f"Relative path: {relative_path}")
                           
                           phys["artifactLocation"]["uri"] = relative_path
                           # Explicitly attach the GitHub checkout directory hook
